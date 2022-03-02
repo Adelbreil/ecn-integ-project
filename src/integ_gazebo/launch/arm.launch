@@ -31,6 +31,9 @@
   <node name="target_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
     args="-urdf -z 1 -x 1 -y 1 -model cible_simple -file $(find integ_description)/urdf/cible.urdf"/>
     
+  <node name="red_sphere_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -z 0 -x 0 -y 0 -model ball_target -file $(find integ_description)/urdf/red_sphere.urdf"/>
+    
     <!-- Run controllers (http://gazebosim.org/tutorials/?tut=ros_control) -->
   <!-- Load joint controller configurations from YAML file to parameter server -->
   <rosparam file="$(find integ_gazebo)/params/arm_control.yaml" command="load"/>

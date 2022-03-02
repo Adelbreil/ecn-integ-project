@@ -4,7 +4,9 @@
 #include <image_transport/subscriber.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/PointStamped.h>
+#include <tinyxml.h>
+
 
 using namespace std;
 //using ecn::ColorDetector;
@@ -12,18 +14,27 @@ using namespace std;
 cv::Mat im;
 
 bool im_ok;
-double stamp;
+ros::Time stamp;
 
 void readImage(const sensor_msgs::ImageConstPtr msg)
 {
     im_ok = true;
     im = cv_bridge::toCvCopy(msg, "bgr8")->image;
     std_msgs::Header h = msg->header;
-    stamp = h.stamp.toSec();
+    stamp = h.stamp.now();
 }
 
 int main(int argc, char** argv)
 {
+
+    TiXmlDocument doc("../../../../../src/integ_description/urdf/arm.urdf.xacro");
+    if(!doc.LoadFile()){
+        cerr << "erreur lors du chargement" << endl;
+        cerr << "error #" << doc.ErrorId() << " : " << doc.ErrorDesc() << endl;
+        return 1;
+    }
+
+
     // subscribe to images
     ros::init(argc, argv, "color_detector");
 
@@ -32,10 +43,9 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber imsub = it.subscribe("/robot/camera1/image_raw", 1, &readImage);
-    ros::Publisher impub = nh.advertise<geometry_msgs::Point>("masscenter", 1000);
-
+    ros::Publisher impub = nh.advertise<geometry_msgs::PointStamped>("masscenter", 1000);
     // init color detector
-    geometry_msgs::Point mass_center;
+    geometry_msgs::PointStamped mass_center;
     int r = 255, g = 0, b = 0;
     if(argc == 4)
     {
@@ -54,8 +64,8 @@ int main(int argc, char** argv)
     {
         if(im_ok)
         {
-            mass_center = cd.process(im);
-            mass_center.z = stamp;
+            mass_center.header.stamp = stamp;
+            mass_center.point = cd.process(im);
             impub.publish(mass_center);
         }
 
