@@ -8,6 +8,8 @@
   <arg name="debug" default="false"/>
   
   <arg name="control" default="effort"/>
+  <arg name="target" default="sphere"/>
+  <arg name="trajectory" default="circle"/>
 
   <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -29,11 +31,30 @@
 
    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF target -->
   <node name="target_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -z 1 -x 1 -y 1 -model cible_simple -file $(find integ_description)/urdf/cible.urdf"/>
-    
-  <node name="red_sphere_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -z 0 -x 0 -y 0 -model ball_target -file $(find integ_description)/urdf/red_sphere.urdf"/>
-    
+    args="-urdf -z 1 -x 1 -y 1 -model target -file $(find integ_description)/urdf/target_models/box.urdf"
+    if="$(eval arg('target') == 'box')"/>
+
+
+   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF target -->
+    <node name="target_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -z 1 -x 1 -y 1 -model target -file $(find integ_description)/urdf/target_models/sphere.urdf"
+    if="$(eval arg('target') == 'sphere')"/>
+
+   <!-- Run a cpp script to launch target's trajectory control -->
+  <node name="square" pkg="target_trajectories" type="square"
+  if="$(eval arg('trajectory') == 'square')"/>
+
+  
+     <!-- Run a cpp script to launch target's trajectory control -->
+  <node name="circle" pkg="target_trajectories" type="circle"
+  if="$(eval arg('trajectory') == 'circle')"/>
+  
+     <!-- Run a cpp script to launch target's trajectory control -->
+  <node name="custom_trajectory" pkg="target_trajectories" type="custom_trajectory"
+  if="$(eval arg('trajectory') == 'custom_trajectory')"/>
+
+
+
     <!-- Run controllers (http://gazebosim.org/tutorials/?tut=ros_control) -->
   <!-- Load joint controller configurations from YAML file to parameter server -->
   <rosparam file="$(find integ_gazebo)/params/arm_control.yaml" command="load"/>
@@ -45,6 +66,4 @@
 <!-- Also robot_state_publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
-  
-    
 </launch>
